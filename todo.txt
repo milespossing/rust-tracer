@@ -1,0 +1,6 @@
+TODO:
+
+Read more about ncollide and collision pipelines:
+	https://ncollide.org/collision_detection_pipeline/
+Build up a ray position system to move rays
+Add data to rays to include sound data
