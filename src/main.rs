@@ -3,6 +3,12 @@ mod position_system;
 
 use amethyst::{
     prelude::*, 
+    renderer::{
+        types::DefaultBackend,
+        RenderingBundle,
+        plugins::{RenderToWindow,RenderPbr3D},
+    },
+    window::DisplayConfig,
     utils::application_root_dir,
     ecs::{prelude::*, WorldExt, Entity},
     core::math::Vector3,
@@ -51,9 +57,18 @@ impl SimpleState for RayTracer {
 }
 
 fn main() -> amethyst::Result<()> {
+    let display_config = DisplayConfig {
+        title: "Amethyst".to_string(),
+        dimensions: Some((1024, 720)),
+        ..Default::default()
+    };
     amethyst::start_logger(Default::default());
     let assets_dir = application_root_dir()?.join("examples/hello_world/assets");
     let game_data = GameDataBuilder::default()
+        .with_bundle(RenderingBundle::<DefaultBackend>::new()
+            .with_plugin(RenderToWindow::from_config(display_config)
+                .with_clear([0.1,0.1,0.1,1.0]),)
+            .with_plugin(RenderPbr3D::default()))?
         .with(PositionSystem, "Position System", &[]);
     let mut game = Application::new(assets_dir, RayTracer {entity1: None, entity2: None}, game_data)?;
     game.run();
