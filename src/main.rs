@@ -1,77 +1,60 @@
-mod rays;
 mod position_system;
+mod rays;
+use crate::rays::Velocity;
+use bevy::{math::f32::Vec3, prelude::*};
 
-use amethyst::{
-    prelude::*, 
-    renderer::{
-        types::DefaultBackend,
-        RenderingBundle,
-        plugins::{RenderToWindow,RenderPbr3D},
-    },
-    window::DisplayConfig,
-    utils::application_root_dir,
-    ecs::{prelude::*, WorldExt, Entity},
-    core::math::Vector3,
-};
-
-use position_system::PositionSystem;
-
-
-struct RayTracer {
-    entity1: Option<Entity>,
-    entity2: Option<Entity>,
+fn rand_vec() -> Vec3 {
+    Vec3::new(
+        rand::random::<f32>(),
+        rand::random::<f32>(),
+        rand::random::<f32>(),
+    )
 }
 
-impl SimpleState for RayTracer {
-    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
-        let world = data.world;
-        self.entity1 = Some(world
-            .create_entity()
-            .with(rays::Ray{
-                pos: Vector3::new(0_f32,0_f32,0_f32), 
-                vel: Vector3::new(1_f32,0_f32,0_f32)
-            })
-            .build());
-        self.entity2 = Some(world
-            .create_entity()
-            .with(rays::Ray{
-                pos: Vector3::new(0_f32,0_f32,0_f32), 
-                vel: Vector3::new(0_f32,0.5_f32,0.5_f32)
-            })
-            .build());
-        println!("Begin!");
-    }
-
-    fn on_stop(&mut self, _: StateData<'_, GameData<'_, '_>>) {
-        println!("End!");
-    }
-
-    fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
-        let storage = data.world.read_storage::<rays::Ray>();
-        let ray1 = storage.get(self.entity1.expect("Entity was not loaded")).expect("Failed to get entity");
-        let ray2 = storage.get(self.entity2.expect("Entity was not loaded")).expect("Failed to get entity");
-        println!("Ray1: {:?}", ray1.pos);
-        println!("Ray2: {:?}", ray2.pos);
-        Trans::None
-    }
+fn main() {
+    App::new()
+        .insert_resource(Msaa { samples: 4 })
+        .add_plugins(DefaultPlugins)
+        .add_system(position_system::position_system)
+        .add_startup_system(setup)
+        // .add_system(position_system::logging_system)
+        .run();
 }
 
-fn main() -> amethyst::Result<()> {
-    let display_config = DisplayConfig {
-        title: "Amethyst".to_string(),
-        dimensions: Some((1024, 720)),
-        ..Default::default()
-    };
-    amethyst::start_logger(Default::default());
-    let assets_dir = application_root_dir()?.join("examples/hello_world/assets");
-    let game_data = GameDataBuilder::default()
-        .with_bundle(RenderingBundle::<DefaultBackend>::new()
-            .with_plugin(RenderToWindow::from_config(display_config)
-                .with_clear([0.1,0.1,0.1,1.0]),)
-            .with_plugin(RenderPbr3D::default()))?
-        .with(PositionSystem, "Position System", &[]);
-    let mut game = Application::new(assets_dir, RayTracer {entity1: None, entity2: None}, game_data)?;
-    game.run();
+fn spawn_ray(commands: &mut Commands, meshes: &mut ResMut<Assets<Mesh>>, materials: &mut ResMut<Assets<StandardMaterial>>) {
+    commands
+        .spawn_bundle(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.01 })),
+            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+            ..default()
+        })
+        .insert(Velocity { vel: rand_vec() });
+}
 
-    Ok(())
+/// set up a simple 3D scene
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for i in 0..10000 {
+      spawn_ray(&mut commands, &mut meshes, &mut materials);
+
+    }
+
+    // light
+    commands.spawn_bundle(PointLightBundle {
+        point_light: PointLight {
+            intensity: 1500.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        ..default()
+    });
+    // camera
+    commands.spawn_bundle(PerspectiveCameraBundle {
+        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        ..default()
+    });
 }

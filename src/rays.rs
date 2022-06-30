@@ -1,21 +1,16 @@
-use amethyst::{
-    core::math::{Vector3},
-    ecs::{Component, VecStorage},
-};
+use bevy::{prelude::*, math::f32::Vec3};
 
-#[derive(Debug)]
-pub struct Ray {
-    pub pos: Vector3<f32>,
-    pub vel: Vector3<f32>,
-}
+#[derive(Component)]
+pub struct Ray { pub vel: Vec3 }
+
+#[derive(Component)]
+pub struct Position { pub pos: Vec3 }
+
+#[derive(Component)]
+pub struct Velocity { pub vel: Vec3 }
 
 impl Ray {
-    pub fn new(pos: Vector3<f32>, vel: Vector3<f32>) -> Ray{
-        Ray { pos, vel }
+    pub fn new(vel: Vec3) -> Ray{
+        Ray { vel }
     }
 }
-
-impl Component for Ray {
-    type Storage = VecStorage<Self>;
-}
-

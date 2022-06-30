@@ -1,18 +1,14 @@
-use amethyst::{
-    ecs::{System, WriteStorage, Read, Join},
-    core::timing::Time,
-};
-use crate::rays::Ray;
+use bevy::prelude::*;
+use crate::rays::{Velocity};
 
-pub struct PositionSystem;
-
-impl<'a> System<'a> for PositionSystem {
-    type SystemData = WriteStorage<'a, Ray>;
-
-    fn run(&mut self, mut rays: Self::SystemData) {
-        for ray in (&mut rays).join(){
-            ray.pos = ray.pos + ray.vel;        
-        }
-    }
+pub fn position_system(mut query: Query<(&mut Transform, &Velocity)>) {
+  for (mut trans, vel) in query.iter_mut() {
+    trans.translation += vel.vel / 60f32;
+  }
 }
 
+pub fn logging_system(query: Query<&Transform>) {
+  for ray in query.iter() {
+    println!("{:?}", ray);
+  }
+}
